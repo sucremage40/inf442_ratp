@@ -18,5 +18,5 @@ class Dataset:
 
 
 def import_dataset(data):
-    current_dataset = pd.read_csv(data, sep=";")
+    current_dataset = pd.read_csv(data, sep=" ") #sep = ';' for 15, " " for 16 and +
     return current_dataset
