@@ -1,14 +1,14 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, Button
+from matplotlib.widgets import Slider, Button # type: ignore
 from calendar import monthrange
 import datetime
 import profil
 import nombre_validation
 
-
-station = '10'
+extension = {15 : "csv", 16 : "txt", 17 : "txt", 18 : "txt", 19 : "txt", 20 : "txt", 21 : "txt"} #'txt' for 16 and +, 'csv' for 15
+station = '1'
 cat = 'DIJFP'
 #dictionnaire_cat = {"Monday": "JOHV", "Tuesday": "JOHV","Wednesday": "JOHV", "Thursday": "JOHV" , "Friday": "JOHV", "Saturday": "SAHV", "Sunday": "DIJFP"}
 dictionnaire_cat = ['JOHV', 'JOHV', 'JOHV', 'JOHV', 'JOHV', 'SAHV', 'DIJFP']
@@ -33,17 +33,22 @@ def values_to_plot(year, month, day):
     prof = profil.Profil(cut_year, month // 7 + 1)
     jour = write_day(year,month,day)
     cat = dictionnaire_cat[datetime.date(year,month,day).weekday()]
-    print(cut_year, month // 7 + 1, day // 10, jour)
-    affluence_journée = val.loc[(val['JOUR'] == jour) & (val['CODE_STIF_ARRET'] == station)].iloc[0,-1]
+    print(jour)
+    extract_row = val.loc[(val['JOUR'] == jour) & (val['CODE_STIF_ARRET'] == station)]
+    affluence_journée = extract_row['NB_VALD'].item()
     profile_journée = prof.dataset.loc[(prof.dataset['CAT_JOUR'] == cat) &(prof.dataset['CODE_STIF_ARRET'] == station)]
 
     profile_to_plot = np.zeros((24))
     for k in range(24):
         temp_df = profile_journée[(profile_journée['TRNC_HORR_60'] == f'{k}H-{k+1}H')]
         if not temp_df.empty:
-            profile_to_plot[k] = temp_df.iloc[0, -1]
+            temp_pourc = temp_df['pourc_validations'].item()
+            if not isinstance(temp_pourc, float): # traiter les variables stockées "a la francaises"
+                temp_pourc = temp_pourc.split(',')
+                temp_pourc = float(f'{temp_pourc[0]}.{temp_pourc[1]}')
+            profile_to_plot[k] = temp_pourc
             
-    return profile_to_plot*affluence_journée
+    return profile_to_plot*affluence_journée/100 # Division pour normaliser les pourcentages
 
 if __name__ == '__main__':
     years = np.arange(15,22,1)
@@ -71,7 +76,8 @@ if __name__ == '__main__':
         slider_days.valmax = end_day
         fig.canvas.draw_idle()
         ax.clear()
-        ax.bar(np.arange(1,25,1), values_to_plot(slider_years.val, slider_months.val, slider_days.val))
+        current_values = values_to_plot(slider_years.val, slider_months.val, slider_days.val)
+        ax.bar(np.arange(1,25,1), current_values)
 
 
 

@@ -8,15 +8,23 @@ import dataset
 class Nombre_Validation(dataset.Dataset):
 
     def __init__(self, _year, _semester):
-        super().__init__(f'datasets/20{_year}S{_semester}_NB_FER.txt') #'txt' for 16 and +, 'csv' for 15
-        self.dataset = self.dataset.replace(['Moins de 5'], self.moins_de_5)
-        nb_val = self.dataset['NB_VALD']
+        extension = {15 : "csv", 16 : "txt", 17 : "txt", 18 : "txt", 19 : "txt", 20 : "txt", 21 : "txt"} #'txt' for 16 and +, 'csv' for 15
+        super().__init__(f'datasets/20{_year}S{_semester}_NB_FER', extension.get(_year)) #'txt' for 16 and +, 'csv' for 15
+        self.dataset['NB_VALD'] = self.dataset['NB_VALD'].replace('Moins de 5', '0') #change to value to put in 'Moins de 5'
+        self.dataset = self.dataset.fillna(0)
+
+        if extension.get(_year) == "txt": #uniquement pour 2016 et après
+            self.dataset['JOUR'] = self.dataset['JOUR'].str.replace('\n', '')
+            print(self.dataset.head())
+
+        
         jour = self.dataset['JOUR'].unique()
         station = self.dataset['CODE_STIF_ARRET'].unique()
         station_final_array = np.array([[s for s in station] for j in jour]).ravel()
         jour_final_array = np.array([[j for s in station] for j in jour]).ravel()
         sum_day = np.zeros((len(jour), len(station)))
         #Solution fonctionnelle mais très lente
+        # nb_val = self.dataset['NB_VALD']
         # list_index_jour = []       
         # for j in jour:
         #     temp_jour = self.dataset.loc[(self.dataset['JOUR'] == j)]
@@ -28,7 +36,6 @@ class Nombre_Validation(dataset.Dataset):
         # print(list_index_jour[130])
         # sum_day = [np.sum([nb_val[int(id)] for id in list_ids]) for list_ids in list_index_jour]
 
-        #Solution en cours, peut être moins foolproof, mais 600 fois plus rapide
         previous_day = 0
         previous_station = 0
         j, s = -1, -1

@@ -7,7 +7,7 @@ import profil
 import nombre_validation
 import plots
 
-years = [15, 16, 17, 18, 19, 20, 21]
+years = [17, 18, 19, 20, 21]
 
 def import_all():
     for y in years:
@@ -16,4 +16,7 @@ def import_all():
 
 if __name__ == '__main__':
     print("lez go")
+    for y  in years:
+        for s in range(2):
+            nombre_validation.Nombre_Validation(y, s + 1)
     

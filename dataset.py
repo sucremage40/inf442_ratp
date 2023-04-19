@@ -12,11 +12,17 @@ ds21 = ["datasets/2021S1_NB_FER.csv", "datasets/2021S1_PROFIL_FER.csv", "dataset
 
 class Dataset:
 
-    def __init__(self, _dataset):
-        self.dataset = import_dataset(_dataset)
-        self.moins_de_5 = '0' #valeur à mettre à la place de "Moins de 5" validations
+    def __init__(self, _dataset_path, _extension):
+        self.dataset_path = _dataset_path + "." + _extension
+        self.extension = _extension
+        self.dataset = self.import_dataset()
 
 
-def import_dataset(data):
-    current_dataset = pd.read_csv(data, sep="\t", lineterminator="\r") #sep = ';' for 15, " " for 16 and +
-    return current_dataset
+    def import_dataset(self):
+        if self.extension == 'csv':
+            current_dataset = pd.read_csv(self.dataset_path, sep=";") #for 2015
+        elif self.extension == 'txt':
+            current_dataset = pd.read_csv(self.dataset_path, sep="\t", lineterminator="\r") #for 2016 and later
+        else: #consider csv as the norm, open to json in future if needed
+            current_dataset = pd.read_csv(self.dataset_path, sep=";")
+        return current_dataset
