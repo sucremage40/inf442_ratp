@@ -20,9 +20,9 @@ class Dataset:
 
     def import_dataset(self):
         if self.extension == 'csv':
-            current_dataset = pd.read_csv(self.dataset_path, sep=";") #for 2015
+            current_dataset = pd.read_csv(self.dataset_path, sep=";", low_memory=False) #for 2015
         elif self.extension == 'txt':
-            current_dataset = pd.read_csv(self.dataset_path, sep="\t", lineterminator="\r") #for 2016 and later
+            current_dataset = pd.read_csv(self.dataset_path, sep="\t", lineterminator="\r", low_memory=False) #for 2016 and later
         else: #consider csv as the norm, open to json in future if needed
-            current_dataset = pd.read_csv(self.dataset_path, sep=";")
+            current_dataset = pd.read_csv(self.dataset_path, sep=";", low_memory=False)
         return current_dataset

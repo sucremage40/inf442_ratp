@@ -2,8 +2,35 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import dataset
+import datetime
 
 
+def periode_annee(year, semester):
+    dataset = pd.read_csv(f'datasets_reorg/nombre_validation_20{year}S{semester}.csv', sep=';')
+
+    dataset['saison_influence'] = dataset.apply(lambda row: coeff_periode(row, year), axis=1)
+    dataset.to_csv(f'datasets_reorg/nombre_validation_20{year}S{semester}_periode.csv', sep=';')
+    print(year, semester)
+
+def coeff_periode(row, year):
+    coeff = 0
+    year_start = datetime.datetime(2000 + year, 1, 1)
+    year_end = datetime.datetime(2001 + year, 1, 1)
+    days_in_year = (year_end - year_start).days
+    jour = is_date(str(row['JOUR']))
+    if jour != None:
+        coeff = (jour - year_start).days / days_in_year
+        a = (datetime.datetime(2000+year, 4, 20) - year_start).days / days_in_year
+        b = np.pi * 2
+        coeff = np.sin((coeff - a)*b)
+    return coeff
+
+def is_date(string, format="%d/%m/%Y"):
+    try:
+        jour = datetime.datetime.strptime(string, format)
+        return jour
+    except ValueError:
+        return None
 
 class Nombre_Validation(dataset.Dataset):
 
@@ -17,47 +44,14 @@ class Nombre_Validation(dataset.Dataset):
             self.dataset['JOUR'] = self.dataset['JOUR'].str.replace('\n', '')
             print(self.dataset.head())
 
-        
-        jour = self.dataset['JOUR'].unique()
-        station = self.dataset['CODE_STIF_ARRET'].unique()
-        station_final_array = np.array([[s for s in station] for j in jour]).ravel()
-        jour_final_array = np.array([[j for s in station] for j in jour]).ravel()
-        sum_day = np.zeros((len(jour), len(station)))
-        #Solution fonctionnelle mais très lente
-        # nb_val = self.dataset['NB_VALD']
-        # list_index_jour = []       
-        # for j in jour:
-        #     temp_jour = self.dataset.loc[(self.dataset['JOUR'] == j)]
-        #     for s in station:
-        #         temp_jour_station = temp_jour.loc[(self.dataset['CODE_STIF_ARRET'] == s)].index.values.tolist()
-        #         sum_day += [np.sum([int(nb_val[int(id)]) for id in temp_jour_station])]
-        #     print(j)
-        # print(np.array(list_index_jour).shape)
-        # print(list_index_jour[130])
-        # sum_day = [np.sum([nb_val[int(id)] for id in list_ids]) for list_ids in list_index_jour]
-
-        previous_day = 0
-        previous_station = 0
-        j, s = -1, -1
-        for index, row in self.dataset.iterrows():
-            current_day = row['JOUR']
-            current_station = row['CODE_STIF_ARRET']
-            if previous_station != current_station:
-                for k in range(len(station)):
-                    if station[k] == current_station: s = k
-            if previous_day != current_day:
-                for k in range(len(jour)):
-                    if jour[k] == current_day: j = k
-            
-            sum_day[j][s] += int(row['NB_VALD'])
-            previous_day = current_day
-            previous_station = current_station
-        sum_day = np.array(sum_day).ravel()
-
-        self.dataset = pd.DataFrame({self.dataset.columns[0]: jour_final_array, self.dataset.columns[3]: station_final_array, self.dataset.columns[7]: sum_day})
+        self.dataset['NB_VALD'] = self.dataset['NB_VALD'].astype(int)
+        self.dataset = self.dataset.groupby(['JOUR', 'ID_REFA_LDA', 'CODE_STIF_ARRET'])['NB_VALD'].agg(['sum','count'])
+        self.dataset = self.dataset.rename(columns={'sum': 'NB_VALD'})
         self.dataset.to_csv(f'datasets_reorg/nombre_validation_20{_year}S{_semester}.csv', sep=';')
 
  
 if __name__ == '__main__':
-    S1_15 = Nombre_Validation(16, 2)
+    print("Nombre validation")
+    S1_15 = Nombre_Validation(15, 1)
     print(S1_15.dataset.head())
+    # periode_annee(16, 1)
